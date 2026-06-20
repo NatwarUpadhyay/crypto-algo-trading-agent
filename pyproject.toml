@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crypto-algo-trading-agent"
+version = "0.1.0"
+description = "Hybrid algorithmic trading agent for centralized (CCXT) and Solana DEX venues"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{name = "Author", email = "you@example.com"}]
+license = {text = "MIT"}
+
+dependencies = [
+    "ccxt>=4.0.0",
+    "solana>=0.30.0",
+    "httpx>=0.25.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "sqlalchemy>=2.0.0",
+    "pandas>=2.0.0",
+    "pyarrow>=13.0.0",
+    "python-telegram-bot>=20.0.0",
+    "httpx-sse>=0.3.0",
+    "structlog>=24.1.0",
+    "python-json-logger>=2.0.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+]
+dev = [
+    "mypy>=1.5.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "ruff>=0.1.0",
+    "pre-commit>=3.0.0",
+]
+mcp = [
+    "mcp>=0.1.0",
+]
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "."
+
+[tool.mypy]
+python_version = "3.11"
+# Strict by default
+strict = true
+# Per-module strict config
+[[tool.mypy.overrides]]
+module = [
+    "src.strategies.*",
+    "src.backtest.*",
+]
+strict = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --strict-markers"
+markers = [
+    "unit: unit tests",
+    "integration: integration tests",
+    "asyncio: async tests",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+py_version = 311
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+select = ["E", "F", "W", "UP", "I"]
+ignore = ["E501"]  # Line too long (handled by black)
+
+[project.scripts]
+crypto-trading-agent = "src.main:main"
