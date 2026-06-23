@@ -266,14 +266,16 @@ Logs also written to `logs/trading_agent.log` in JSON format.
   - verifies dry-run return types/shapes for:
     `get_ticker`, `get_ohlcv`, `get_balance`, `place_order`, `cancel_order`, `get_open_positions`
 
-#### Testing status
-- Tests have been added, but **no test runner has been executed successfully yet** in this environment (earlier `pytest` command failed because `pytest` is not available on PATH).
+#### Testing status (updated)
+- Installed test extras and executed pytest successfully:
+  - **`python -m pytest -q`**
+  - **Result: 4 passed** (`tests/test_adapters_contract.py`)
 
 ### Planned Implementation (next)
 
 1. **`src/adapters/base.py`**:
    - `ExchangeAdapter` abstract base class (ABC)
-   - 8 core async methods:
+   - Core async methods:
      - `get_ticker(symbol)` → current bid/ask/last
      - `get_ohlcv(symbol, timeframe, limit)` → historical OHLCV
      - `get_balance()` → account balances
@@ -283,38 +285,61 @@ Logs also written to `logs/trading_agent.log` in JSON format.
      - (Additional: `get_position(symbol)`, `close_position(symbol)`)
    - Properties: `exchange_name`, `is_testnet`
 
-2. **`src/adapters/ccxt_adapter.py`**:
-   - `CCXTAdapter(ExchangeAdapter)` implementing ABC
-   - Constructor: takes exchange name (e.g., "binance"), API key/secret, testnet flag
-   - Uses `ccxt` library under the hood
-   - Maps ccxt methods to ExchangeAdapter interface
-   - Error handling for network/API errors
-   - Testnet detection and configuration (Binance uses ccxt's `{'options': {'defaultType': 'spot'}}` for spot trading)
+2. **Upper-layer Market Structure Signals (Phase 3.5+)**
+   - Add a venue-agnostic “market structure” signal layer that sits above strategies:
+     - **FVG (Fair Value Gap)** detection + mitigation rules (how/when price re-enters)
+     - **Order Block** identification (bullish/bearish OB zones) + invalidation logic
+     - **BGV / Break & Guard Volume** concepts (volume-guarded breakout regimes)
+     - **Liquidity swap** modeling (liquidity grabs → impulse regime)
+   - Technical factors to improve efficiency:
+     - Precompute rolling pivots/swing structure on OHLCV cache (Parquet) to avoid O(N²)
+     - Use vectorized calculations where possible; keep upper-layer pure + deterministic
+     - Normalize timezones and align candle boundaries across adapters/backtests
+     - Parameterize thresholds (gap size, OB overlap %, liquidity-sweep confirmation bars)
+     - Add “signal confidence” score so risk/execution can filter low-quality setups
 
-3. **`src/adapters/solana_adapter.py`**:
+3. **Crypto Algo Trading KPIs (Phase 3.5+)**
+   - Extend backtest outputs + future dashboard/MCP queries with core KPIs:
+     - **Win rate**, **profit factor**, **expectancy (avg R)**, **average win/loss**
+     - **Max drawdown** (absolute + %), **Sharpe/Sortino** (if enough returns series)
+     - **Calmar ratio**, **return / maxDD**
+     - **Trade count**, **exposure time**, **turnover**
+     - **Slippage sensitivity** (simulated fill assumptions)
+     - **Kill-switch frequency** + breach counts (risk-system KPI)
+     - **Latency proxy** (bar→signal→fill steps in simulation)
+     - **FVG/OB/Liquidity-swap hit-rate**: structure → profitable follow-through
+     - **Signal precision/recall proxy**: setup → outcome mapping for tuning
+
+4. **`src/adapters/ccxt_adapter.py`**:
+   - `CCXTAdapter(ExchangeAdapter)` implementing ABC
+   - Constructor: exchange name (e.g., "binance"), API key/secret, testnet flag
+   - Uses `ccxt` library under the hood; maps ccxt methods to ExchangeAdapter interface
+   - Error handling for network/API errors
+   - Testnet detection & configuration (Binance spot via ccxt `defaultType=spot`)
+
+5. **`src/adapters/solana_adapter.py`**:
    - `SolanaDEXAdapter(ExchangeAdapter)` implementing ABC
-   - Constructor: takes Helius RPC URL, wallet (Keypair), commitment level
+   - Constructor: Helius RPC URL, wallet (Keypair), commitment level
    - Uses `solana-py` + `httpx` for Helius RPC + Jupiter API
-   - Jupiter API for price quotes and swaps
    - Maps to ExchangeAdapter interface:
      - `get_ticker()` → Jupiter price quote API
      - `get_ohlcv()` → Birdeye API (or fallback to local Parquet cache)
-     - `get_balance()` → Solana blockchain account query (SOL + token balances)
+     - `get_balance()` → Solana account query (SOL + token balances)
      - `place_order()` → Jupiter swap API + transaction signing
-     - `cancel_order()` → Solana blockchain tx cancellation (if possible)
-     - `get_open_positions()` → Query Marinade/Orca liquidity positions (if applicable)
-   - Handles signing, RPC rate limits, transaction confirmation
+     - `cancel_order()` → tx cancellation (if applicable)
+     - `get_open_positions()` → on-chain position/liquidity data (if applicable)
+   - Handles signing, RPC rate limits, and confirmation
 
-4. **`tests/test_adapters_ccxt.py`**:
-   - Functional tests against Binance testnet
+6. **`tests/test_adapters_ccxt.py`**:
+   - Functional tests against Binance testnet (or mock where no credentials)
    - Test each method: get_ticker, get_ohlcv, get_balance, place_order (dry), cancel_order
    - Fixtures for mock data
-   - Assert interface contract (correct return types, fields)
+   - Assert interface contract (correct return types/fields)
 
-5. **`tests/test_adapters_solana.py`**:
-   - Functional tests against Solana devnet
+7. **`tests/test_adapters_solana.py`**:
+   - Functional tests against Solana devnet (or mock where no credentials)
    - Similar structure to CCXT tests
-   - Uses devnet wallet (funded via airdrop or faucet)
+   - Uses devnet wallet (funded via faucet/airdrop)
    - Test token swaps via Jupiter
    - Assert interface contract
 
