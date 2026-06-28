@@ -242,7 +242,7 @@ Logs also written to `logs/trading_agent.log` in JSON format.
 
 ## Phase 2 — Exchange Adapters (IN PROGRESS)
 
-### Status / What’s been implemented
+
 
 #### New Phase 2 adapter scaffolding (safe dry-run contract only)
 - **`src/adapters/base.py`**
@@ -261,10 +261,7 @@ Logs also written to `logs/trading_agent.log` in JSON format.
   - exports the adapter classes + shared dataclasses/errors
 
 #### New contract tests (no live network calls)
-- **`tests/test_adapters_contract.py`**
-  - verifies required methods are async/awaitable
-  - verifies dry-run return types/shapes for:
-    `get_ticker`, `get_ohlcv`, `get_balance`, `place_order`, `cancel_order`, `get_open_positions`
+
 
 #### Testing status (updated)
 - Installed test extras and executed pytest successfully:

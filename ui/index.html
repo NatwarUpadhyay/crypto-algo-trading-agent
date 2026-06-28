@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crypto Algo Trading Agent — Dashboard (Mock)</title>
+
+    <!-- Tailwind via CDN (no build step required) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="bg-slate-950 text-slate-100">
+    <!-- Top bar -->
+    <header class="border-b border-slate-800 bg-slate-950/60 backdrop-blur">
+      <div class="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center font-bold">
+            A
+          </div>
+          <div>
+            <div class="font-semibold leading-tight">Trading Agent</div>
+            <div class="text-xs text-slate-400 leading-tight">Dynamic UI (mock data)</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span id="connectionBadge" class="inline-flex items-center gap-2 rounded-full border border-slate-800 px-3 py-1 text-xs text-slate-300">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true"></span>
+            Frontend-ready
+          </span>
+          <button
+            id="refreshBtn"
+            class="rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-slate-700 px-3 py-1.5 text-sm border border-slate-700"
+            type="button"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-4 py-6">
+      <!-- KPI Row -->
+      <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+          <div class="text-xs text-slate-400">Win Rate</div>
+          <div class="mt-1 text-2xl font-semibold" id="kpiWinRate">—</div>
+          <div class="mt-3 flex items-center gap-2">
+            <span class="inline-flex items-center rounded-full bg-emerald-400/10 text-emerald-300 px-2.5 py-1 text-xs border border-emerald-400/20">
+              <span id="winRateDelta">—</span>
+            </span>
+            <div class="text-xs text-slate-500">vs last run</div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+          <div class="text-xs text-slate-400">Max Drawdown</div>
+          <div class="mt-1 text-2xl font-semibold" id="kpiMaxDD">—</div>
+          <div class="mt-3 text-xs text-slate-500">lower is better</div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+          <div class="text-xs text-slate-400">Profit Factor</div>
+          <div class="mt-1 text-2xl font-semibold" id="kpiPF">—</div>
+          <div class="mt-3 text-xs text-slate-500">gross wins / gross losses</div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+          <div class="text-xs text-slate-400">Expectancy (avg R)</div>
+          <div class="mt-1 text-2xl font-semibold" id="kpiExpectancy">—</div>
+          <div class="mt-3 text-xs text-slate-500">avg win - avg loss (in R)</div>
+        </div>
+      </section>
+
+      <!-- Layout -->
+      <section class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Charts / signal -->
+        <div class="lg:col-span-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="font-semibold">Market Structure Signals</div>
+              <div class="text-xs text-slate-500">FVG / Order Block / Liquidity Swap (mock)</div>
+            </div>
+            <div class="text-xs text-slate-400">
+              <span class="font-medium text-slate-200" id="lastUpdated">—</span>
+            </div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="rounded-xl border border-slate-800 bg-slate-950/30 p-4">
+              <div class="text-sm font-medium">FVG Heatmap (mock)</div>
+              <div class="mt-3 grid grid-cols-10 gap-1" id="fvgHeatmap"></div>
+              <div class="mt-3 text-xs text-slate-500">Intensity indicates predicted re-entry strength</div>
+            </div>
+
+            <div class="rounded-xl border border-slate-800 bg-slate-950/30 p-4">
+              <div class="text-sm font-medium">Liquidity Events (mock)</div>
+              <div class="mt-3 space-y-2" id="liquidityEvents"></div>
+            </div>
+          </div>
+
+          <div class="mt-4 rounded-xl border border-slate-800 bg-slate-950/30 p-4">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <div class="text-sm font-medium">Signal Confidence</div>
+                <div class="text-xs text-slate-500">Upper-layer filtering before risk/execution</div>
+              </div>
+              <div class="text-xs text-slate-400">
+                <span class="inline-flex items-center gap-2 rounded-full border border-slate-800 px-3 py-1">
+                  <span class="inline-block w-2 h-2 rounded-full bg-indigo-400" aria-hidden="true"></span>
+                  <span id="signalConfidence">—</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <div class="h-3 w-full rounded-full bg-slate-800 overflow-hidden">
+                <div id="signalConfidenceBar" class="h-full w-0 bg-gradient-to-r from-indigo-500 to-fuchsia-500 transition-[width] duration-500"></div>
+              </div>
+              <div class="mt-2 text-xs text-slate-500" id="confidenceExplanation">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Positions -->
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+          <div class="font-semibold">Positions (mock)</div>
+          <div class="text-xs text-slate-500 mt-1">Deterministic placeholders</div>
+
+          <div class="mt-4 space-y-2" id="positionsList"></div>
+
+          <div class="mt-6">
+            <div class="font-semibold text-sm">Risk Checks</div>
+            <div class="text-xs text-slate-500 mt-1">Gates before any live order</div>
+
+            <div class="mt-3 space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-400">DRY_RUN</span>
+                <span id="riskDryRun" class="font-medium text-emerald-300">—</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-400">Kill Switch</span>
+                <span id="riskKillSwitch" class="font-medium text-emerald-300">—</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-400">Cooldown</span>
+                <span id="riskCooldown" class="font-medium text-emerald-300">—</span>
+              </div>
+            </div>
+
+            <div class="mt-4 rounded-xl border border-slate-800 bg-slate-950/30 p-3">
+              <div class="text-xs text-slate-400">Note</div>
+              <div class="text-sm mt-1 text-slate-200">
+                This UI is currently frontend-only and uses mock data. Hook it to future backend endpoints once Phase 3+ exists.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="mt-8 pb-8 text-xs text-slate-500">
+        Tip: later replace mock generator with real API calls to your backend (risk/execution & KPI endpoints).
+      </footer>
+    </main>
+
+    <script>
+      // ---------- Mock data generator (frontend-only) ----------
+      function fmtPct(x) {
+        return (x * 100).toFixed(1) + "%";
+      }
+      function fmtNum(x) {
+        const s = Number(x);
+        if (Math.abs(s) >= 1e6) return (s / 1e6).toFixed(2) + "M";
+        if (Math.abs(s) >= 1e3) return (s / 1e3).toFixed(2) + "K";
+        return s.toFixed(2);
+      }
+
+      function seededRandom(seed) {
+        // simple LCG for deterministic mock updates
+        let state = seed >>> 0;
+        return () => {
+          state = (1664525 * state + 1013904223) >>> 0;
+          return state / 4294967296;
+        };
+      }
+
+      function generateMockSnapshot(runSeed) {
+        const rnd = seededRandom(runSeed);
+
+        const winRate = 0.46 + (rnd() - 0.5) * 0.16; // 0.38..0.54-ish
+        const pf = 1.05 + rnd() * 1.25; // 1.05..2.3
+        const expectancy = -0.2 + rnd() * 0.7; // -0.2..0.5
+        const maxDD = 0.06 + rnd() * 0.16; // 6%..22%
+
+        const fvg = Array.from({ length: 40 }, () => Math.max(0, rnd() - 0.15)); // intensities
+        const liquidityEvents = [
+          { t: "Sweep", dir: rnd() > 0.5 ? "Buy-side" : "Sell-side", strength: rnd() },
+          { t: "Grab", dir: rnd() > 0.5 ? "Sell-side" : "Buy-side", strength: rnd() },
+          { t: "Re-entry", dir: rnd() > 0.5 ? "Bullish" : "Bearish", strength: rnd() },
+          { t: "Impulse", dir: rnd() > 0.5 ? "UP" : "DOWN", strength: rnd() }
+        ].map(e => ({...e, strength: Number(e.strength.toFixed(2))}));
+
+        const confidence = Math.max(0, Math.min(1, 0.25 + (winRate - 0.4) * 1.1 + (pf - 1) * 0.15 - maxDD * 1.1));
+        const dryRun = true;
+        const killSwitch = false;
+        const cooldownOk = true;
+
+        const positions = [
+          { sym: "BTC/USDT", side: "long", qty: 0.1, entry: 100.0, sl: 90.0 },
+          { sym: "SOL/USDC", side: "long", qty: 0.5, entry: 1.0, sl: 0.9 }
+        ].slice(0, rnd() > 0.5 ? 2 : 1).map(p => ({
+          ...p,
+          pnl: (rnd() - 0.5) * 140
+        }));
+
+        return {
+          winRate,
+          pf,
+          expectancy,
+          maxDD,
+          fvg,
+          liquidityEvents,
+          confidence,
+          dryRun,
+          killSwitch,
+          cooldownOk,
+          positions
+        };
+      }
+
+      let lastRunSeed = 42;
+
+      function colorFrom01(x) {
+        // x in [0,1], return tailwind-like opacity via inline style
+        const v = Math.max(0, Math.min(1, x));
+        return `rgba(99,102,241,${0.15 + v * 0.75})`; // indigo-ish
+      }
+
+      function render(snapshot, prevSnapshot) {
+        document.getElementById("kpiWinRate").textContent = fmtPct(snapshot.winRate);
+        const delta = prevSnapshot ? snapshot.winRate - prevSnapshot.winRate : 0;
+        const deltaEl = document.getElementById("winRateDelta");
+        deltaEl.textContent = (delta >= 0 ? "+" : "") + fmtPct(delta);
+        deltaEl.className = "inline-flex items-center rounded-full border px-2.5 py-1 text-xs " +
+          (delta >= 0 ? "bg-emerald-400/10 text-emerald-300 border-emerald-400/20" : "bg-rose-400/10 text-rose-300 border-rose-400/20");
+
+        document.getElementById("kpiMaxDD").textContent = fmtPct(snapshot.maxDD);
+        document.getElementById("kpiPF").textContent = fmtNum(snapshot.pf);
+        document.getElementById("kpiExpectancy").textContent = fmtNum(snapshot.expectancy) + " R";
+
+        // FVG heatmap
+        const heat = document.getElementById("fvgHeatmap");
+        heat.innerHTML = "";
+        snapshot.fvg.forEach((v, idx) => {
+          const el = document.createElement("div");
+          el.className = "w-2 h-6 rounded-sm border border-slate-800";
+          el.style.backgroundColor = colorFrom01(v);
+          el.title = "FVG intensity: " + v.toFixed(2);
+          heat.appendChild(el);
+        });
+
+        // Liquidity events
+        const events = document.getElementById("liquidityEvents");
+        events.innerHTML = "";
+        snapshot.liquidityEvents.forEach(e => {
+          const row = document.createElement("div");
+          row.className = "rounded-lg border border-slate-800 bg-slate-950/30 px-3 py-2 flex items-center justify-between gap-3";
+          row.innerHTML = `
+            <div class="text-xs">
+              <div class="text-slate-300 font-medium">${e.t}</div>
+              <div class="text-slate-500">${e.dir}</div>
+            </div>
+            <div class="text-xs text-slate-200 font-semibold">${Math.round(e.strength*100)}%</div>
+          `;
+          events.appendChild(row);
+        });
+
+        // Confidence bar
+        const pct = Math.round(snapshot.confidence * 100);
+        document.getElementById("signalConfidence").textContent = pct + "%";
+        document.getElementById("signalConfidenceBar").style.width = pct + "%";
+        const exp = pct >= 70 ? "High quality setup: proceed to risk evaluation." :
+                    pct >= 45 ? "Moderate quality: risk checks will tighten." :
+                    "Low confidence: filter out or reduce exposure.";
+        document.getElementById("confidenceExplanation").textContent = exp;
+
+        // Positions
+        const pos = document.getElementById("positionsList");
+        pos.innerHTML = "";
+        snapshot.positions.forEach(p => {
+          const pnlColor = p.pnl >= 0 ? "text-emerald-300" : "text-rose-300";
+          const row = document.createElement("div");
+          row.className = "rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2";
+          row.innerHTML = `
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <div class="text-sm font-medium">${p.sym}</div>
+                <div class="text-xs text-slate-500">${p.side.toUpperCase()} · qty ${p.qty}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs text-slate-500">PnL</div>
+                <div class="${pnlColor} text-sm font-semibold">${p.pnl >= 0 ? "+" : ""}${p.pnl.toFixed(2)}</div>
+              </div>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-xs">
+              <span class="text-slate-500">Entry ${p.entry}</span>
+              <span class="text-slate-500">SL ${p.sl}</span>
+            </div>
+          `;
+          pos.appendChild(row);
+        });
+
+        // Risk checks
+        document.getElementById("riskDryRun").textContent = snapshot.dryRun ? "ENABLED" : "DISABLED";
+        document.getElementById("riskKillSwitch").textContent = snapshot.killSwitch ? "TRIPPED" : "OK";
+        document.getElementById("riskCooldown").textContent = snapshot.cooldownOk ? "OK" : "WAIT";
+
+        // last updated
+        document.getElementById("lastUpdated").textContent = new Date().toLocaleString();
+      }
+
+      let prev = null;
+
+      function refresh() {
+        const snapshot = generateMockSnapshot(lastRunSeed++);
+        render(snapshot, prev);
+        prev = snapshot;
+      }
+
+      document.getElementById("refreshBtn").addEventListener("click", refresh);
+
+      // initial render
+      refresh();
+    </script>
+  </body>
+</html>
