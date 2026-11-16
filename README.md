@@ -1,4 +1,4 @@
-# Crypto Algo Trading Agent
+# Crypto Algo Trading Agent.
 
 A hybrid algorithmic trading agent for **centralized exchanges (CCXT)** and **Solana DEX venues**, with deterministic risk/execution and Claude advisory capabilities.
 
