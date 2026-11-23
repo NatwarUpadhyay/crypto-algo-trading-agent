@@ -2,7 +2,7 @@
 
 A hybrid algorithmic trading agent for **centralized exchanges (CCXT)** and **Solana DEX venues**, with deterministic risk/execution and Claude advisory capabilities.
 
-**Status**: Phase 1 complete — configuration, logging, and folder structure ready..
+**Status**: Phase 1 complete — configuration, logging, and folder structure ready.
 
 ---
 
